@@ -151,7 +151,9 @@ const Page = () => {
 
   // Process revenue data for charts
   const processRevenueData = () => {
-    if (!revenueChartData?.data) return [];
+    if (!revenueChartData?.data) {
+      return { monthlyRevenue: [], weeklyRevenue: [] };
+    }
 
     const monthlyRevenue =
       revenueChartData.data.monthlyRevenue?.map((item: any) => ({
