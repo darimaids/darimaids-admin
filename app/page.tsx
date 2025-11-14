@@ -4,19 +4,28 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+
+// components
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+
+// store
 import { useAdminStore } from "@/store/useAdminStore";
+
+// api
 import { login } from "@/services/auth/authentication";
+
+// icons
+import { EyeOff, Eye } from "lucide-react";
 
 const LoginPage = () => {
   const router = useRouter();
   const { setAdminData } = useAdminStore();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const { mutate, isPending } = useMutation({
     mutationFn: login,
@@ -24,12 +33,10 @@ const LoginPage = () => {
       if (res?.success && res?.data?.token && res?.data?.user) {
         const { token, user } = res.data;
 
-        // ✅ store in session storage
         sessionStorage.setItem("accessToken", token);
         sessionStorage.setItem("fullName", user.fullName || "");
         sessionStorage.setItem("email", user.email || "");
 
-        // ✅ update Zustand store
         setAdminData(token, user);
 
         toast.success("Login Successful!");
@@ -39,8 +46,8 @@ const LoginPage = () => {
       }
     },
     onError: (error: any) => {
-      console.error("Login Error:", error);
-      toast.error("Invalid credentials");
+      // console.error("Login Error:", error);
+      toast.error(error);
     },
   });
 
@@ -65,7 +72,7 @@ const LoginPage = () => {
         </div>
 
         <h1 className="text-lg sm:text-xl font-semibold text-center dark:text-white mb-8">
-          Log in to your account
+          Log in to your portal
         </h1>
 
         <div className="space-y-4">
@@ -85,12 +92,28 @@ const LoginPage = () => {
             <label className="block text-sm text-[#666] dark:text-gray-300 mb-1">
               Password
             </label>
-            <Input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pr-10"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-300"
+              >
+                {showPassword ? (
+                  <EyeOff />
+                ) : (
+                  <Eye />
+                )}
+              </button>
+            </div>
           </div>
 
           <Button
@@ -107,16 +130,6 @@ const LoginPage = () => {
             )}
           </Button>
         </div>
-
-        <p className="text-center text-sm text-gray-600 dark:text-gray-300 mt-6">
-          Don’t have an account?{" "}
-          <span
-            className="text-[#6A4AAD] font-semibold cursor-pointer hover:underline"
-            onClick={() => router.push("/signup")}
-          >
-            Sign up
-          </span>
-        </p>
       </div>
     </div>
   );
