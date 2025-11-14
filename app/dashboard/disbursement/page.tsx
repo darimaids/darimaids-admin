@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // API
 import { getDisbursement } from "@/services/disbursement/disbursement";
@@ -347,9 +348,7 @@ const Disbursement = () => {
           </CardHeader>
           <CardContent className="px-8 sm:p-6">
             {isLoading ? (
-              <div className="flex items-center justify-center py-10">
-                <Spinner />
-              </div>
+              <TableSkeleton />
             ) : (
               <div className="overflow-x-auto -mx-4 sm:mx-0">
                 <div className="inline-block min-w-full align-middle">
@@ -451,3 +450,24 @@ const Disbursement = () => {
 };
 
 export default Disbursement;
+
+
+const TableSkeleton = () => {
+  return (
+    <div className="mt-5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div
+          key={i}
+          className="grid grid-cols-6 gap-4 py-4 border-b last:border-0"
+        >
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-14" />
+          <Skeleton className="h-6 w-16 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+};
