@@ -13,7 +13,7 @@ const navItems = [
   { name: "Home", icon: Home, href: "/dashboard/overview" },
   { name: "Bookings", icon: Calendar, href: "/dashboard/bookings" },
   { name: "Cleaners", icon: Users, href: "/dashboard/cleaners" },
-  { name: "Banks", icon: DollarSign, href: "/dashboard/banks" },
+  { name: "Disburements", icon: DollarSign, href: "/dashboard/disbursement" },
 ];
 
 export default function Sidebar() {

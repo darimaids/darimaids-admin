@@ -65,6 +65,7 @@ import {
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // API
 import { bookingStat } from "@/services/overview/overview";
@@ -236,11 +237,10 @@ const BookingPage = () => {
         </div>
       </div>
 
-      {/* Recent Bookings Table */}
       <section>
         <Card className="w-full overflow-x-auto">
           <CardHeader>
-            <CardTitle>Recent Bookings</CardTitle>
+            <CardTitle>Bookings</CardTitle>
             <CardDescription>
               A list of all bookings made on the platform.
             </CardDescription>
@@ -248,139 +248,146 @@ const BookingPage = () => {
           <CardContent className="px-8 sm:p-6">
             <div className="overflow-x-auto -mx-4 sm:mx-0">
               <div className="inline-block min-w-full align-middle">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="min-w-[150px]">User</TableHead>
-                      <TableHead className="min-w-[120px]">Service</TableHead>
-                      <TableHead className="min-w-20">Cleaners</TableHead>
-                      <TableHead className="min-w-[120px]">
-                        Date & Time
-                      </TableHead>
-                      <TableHead className="min-w-20">Charge</TableHead>
-                      <TableHead className="min-w-[100px]">Status</TableHead>
-                      <TableHead className="min-w-[60px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentBookings?.data?.map((booking: any) => (
-                      <TableRow
-                        key={booking._id}
-                        className=" transition-colors"
-                      >
-                        {/* User Info */}
-                        <TableCell>
-                          <div className="flex flex-col space-y-1">
-                            <span className="font-medium text-xs md:text-sm">
-                              {booking.userId.fullName}
-                            </span>
-                            <span className="text-xs text-muted-foreground truncate max-w-[150px]">
-                              {booking.userId.email}
-                            </span>
-                          </div>
-                        </TableCell>
-
-                        {/* Service */}
-                        <TableCell>
-                          <div className="flex flex-col space-y-1">
-                            <span className="font-medium capitalize text-xs md:text-sm">
-                              {booking.serviceType}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {booking.services}
-                            </span>
-                          </div>
-                        </TableCell>
-
-                        {/* Cleaners */}
-                        <TableCell className="text-xs md:text-sm">
-                          {booking.cleaners}
-                        </TableCell>
-
-                        {/* Date & Time */}
-                        <TableCell>
-                          <div className="flex flex-col space-y-1">
-                            <span className="text-xs md:text-sm">
-                              {new Date(booking.date).toLocaleDateString()}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {booking.time}
-                            </span>
-                          </div>
-                        </TableCell>
-
-                        {/* Charge */}
-                        <TableCell className="text-xs md:text-sm font-medium">
-                          ${booking.charge.toFixed(2)}
-                        </TableCell>
-
-                        {/* Status */}
-                        <TableCell>
-                          <Badge
-                            variant={
-                              booking.status === "pending"
-                                ? "secondary"
-                                : booking.status === "completed"
-                                ? "success"
-                                : "destructive"
-                            }
-                            className="text-xs"
-                          >
-                            {booking.status.charAt(0).toUpperCase() +
-                              booking.status.slice(1)}
-                          </Badge>
-                        </TableCell>
-
-                        {/* Actions */}
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                                <span className="sr-only">Open menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleViewBooking(booking._id)}
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleAssignCleaner(booking._id)}
-                              >
-                                <UserPlus className="mr-2 h-4 w-4" />
-                                Assign Cleaner
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteBooking(booking._id)}
-                                className="text-red-600 focus:text-red-600"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Booking
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+                {isRecentBookingsLoading ? (
+                  <TableSkeleton />
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[150px]">User</TableHead>
+                        <TableHead className="min-w-[120px]">Service</TableHead>
+                        <TableHead className="min-w-20">Cleaners</TableHead>
+                        <TableHead className="min-w-[120px]">
+                          Date & Time
+                        </TableHead>
+                        <TableHead className="min-w-20">Charge</TableHead>
+                        <TableHead className="min-w-[100px]">Status</TableHead>
+                        <TableHead className="min-w-[60px]">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {recentBookings?.data?.map((booking: any) => (
+                        <TableRow
+                          key={booking._id}
+                          className=" transition-colors"
+                        >
+                          {/* User Info */}
+                          <TableCell>
+                            <div className="flex flex-col space-y-1">
+                              <span className="font-medium text-xs md:text-sm">
+                                {booking.userId.fullName}
+                              </span>
+                              <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                                {booking.userId.email}
+                              </span>
+                            </div>
+                          </TableCell>
+
+                          {/* Service */}
+                          <TableCell>
+                            <div className="flex flex-col space-y-1">
+                              <span className="font-medium capitalize text-xs md:text-sm">
+                                {booking.serviceType}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {booking.services}
+                              </span>
+                            </div>
+                          </TableCell>
+
+                          {/* Cleaners */}
+                          <TableCell className="text-xs md:text-sm">
+                            {booking.cleaners}
+                          </TableCell>
+
+                          {/* Date & Time */}
+                          <TableCell>
+                            <div className="flex flex-col space-y-1">
+                              <span className="text-xs md:text-sm">
+                                {new Date(booking.date).toLocaleDateString()}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {booking.time}
+                              </span>
+                            </div>
+                          </TableCell>
+
+                          {/* Charge */}
+                          <TableCell className="text-xs md:text-sm font-medium">
+                            ${booking.charge.toFixed(2)}
+                          </TableCell>
+
+                          {/* Status */}
+                          <TableCell>
+                            <Badge
+                              variant={
+                                booking.status === "pending"
+                                  ? "secondary"
+                                  : booking.status === "completed"
+                                  ? "success"
+                                  : "destructive"
+                              }
+                              className="text-xs"
+                            >
+                              {booking.status.charAt(0).toUpperCase() +
+                                booking.status.slice(1)}
+                            </Badge>
+                          </TableCell>
+
+                          {/* Actions */}
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                  <span className="sr-only">Open menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleViewBooking(booking._id)}
+                                >
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleAssignCleaner(booking._id)
+                                  }
+                                >
+                                  <UserPlus className="mr-2 h-4 w-4" />
+                                  Assign Cleaner
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleDeleteBooking(booking._id)
+                                  }
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete Booking
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
       </section>
 
-      {/* View Booking Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -392,12 +399,10 @@ const BookingPage = () => {
 
           {isBookingDetailsLoading ? (
             <div className="flex items-center justify-center py-8">
-              {/* <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div> */}
               <Spinner />
             </div>
           ) : bookingDetails?.data ? (
             <div className="space-y-6">
-              {/* Customer Information */}
               <div className="space-y-2">
                 <h3 className="font-semibold text-lg border-b pb-2">
                   Customer Information
@@ -430,7 +435,6 @@ const BookingPage = () => {
                 </div>
               </div>
 
-              {/* Booking Information */}
               <div className="space-y-2">
                 <h3 className="font-semibold text-lg border-b pb-2">
                   Booking Information
@@ -823,3 +827,23 @@ const BookingPage = () => {
 };
 
 export default BookingPage;
+
+const TableSkeleton = () => {
+  return (
+    <div className="mt-5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div
+          key={i}
+          className="grid grid-cols-6 gap-4 py-4 border-b last:border-0"
+        >
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-14" />
+          <Skeleton className="h-6 w-16 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+};
