@@ -55,6 +55,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
 
 // API
 import { bookingStat } from "@/services/overview/overview";
@@ -62,11 +72,11 @@ import {
   bookings,
   viewBooking,
   assignBooking,
+  assignBookingToMultipleCleaners,
   deleteBooking,
 } from "@/services/booking/bookings";
 import { allCleaners } from "@/services/cleaners/cleaners";
-import { toast } from "sonner";
-import { Spinner } from "@/components/ui/spinner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const BookingPage = () => {
   const queryClient = useQueryClient();
@@ -77,14 +87,15 @@ const BookingPage = () => {
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCleanerId, setSelectedCleanerId] = useState<string>("");
+  const [isMultiAssignDialogOpen, setIsMultiAssignDialogOpen] = useState(false);
+  const [selectedBookingForMulti, setSelectedBookingForMulti] = useState("");
+  const [selectedCleanerIds, setSelectedCleanerIds] = useState<string[]>([]);
 
-  // Fetch booking stats
   const { data: bookingStats, isLoading: isBookingStatsLoading } = useQuery({
     queryKey: ["bookingStat"],
     queryFn: bookingStat,
   });
 
-  // Fetch recent bookings
   const { data: recentBookings, isLoading: isRecentBookingsLoading } = useQuery(
     {
       queryKey: ["bookings"],
@@ -92,13 +103,11 @@ const BookingPage = () => {
     }
   );
 
-  // Fetch cleaners
   const { data: cleaners, isLoading: isAllCleanersLoading } = useQuery({
     queryKey: ["cleaners"],
     queryFn: allCleaners,
   });
 
-  // Fetch single booking details
   const { data: bookingDetails, isLoading: isBookingDetailsLoading } = useQuery(
     {
       queryKey: ["viewBooking", selectedBookingId],
@@ -107,7 +116,6 @@ const BookingPage = () => {
     }
   );
 
-  // Assign booking mutation
   const assignMutation = useMutation({
     mutationFn: ({
       bookingId,
@@ -124,11 +132,35 @@ const BookingPage = () => {
       setSelectedBookingId(null);
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Failed to assign cleaner");
+      toast.error(error || "Failed to assign cleaner");
     },
   });
 
-  // Delete booking mutation
+  const assignMultipleMutation = useMutation({
+    mutationFn: ({
+      bookingId,
+      cleanerIds,
+    }: {
+      bookingId: string;
+      cleanerIds: string[];
+    }) =>
+      assignBookingToMultipleCleaners({
+        bookingId,
+        workerIds: cleanerIds,
+      }),
+
+    onSuccess: (data) => {
+      toast.success(data?.message || "Cleaners assigned successfully!");
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      setIsMultiAssignDialogOpen(false);
+      setSelectedBookingForMulti("");
+      setSelectedCleanerIds([]);
+    },
+    onError: (error: any) => {
+      toast.error(error);
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (bookingId: string) => deleteBooking(bookingId),
     onSuccess: () => {
@@ -138,11 +170,10 @@ const BookingPage = () => {
       setSelectedBookingId(null);
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Failed to delete booking");
+      toast.error(error || "Failed to delete booking");
     },
   });
 
-  // Dashboard stat cards
   const cards = [
     {
       title: "Total Bookings",
@@ -191,12 +222,19 @@ const BookingPage = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Dashboard cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-4">
-        {cards.map((card, index) => (
-          <DashboardStatCard key={index} {...card} />
-        ))}
-      </section>
+      <div className="">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-4">
+          {cards.map((card, index) => (
+            <DashboardStatCard key={index} {...card} />
+          ))}
+        </section>
+
+        <div className="flex justify-end">
+          <Button onClick={() => setIsMultiAssignDialogOpen(true)}>
+            Assign Multiple Cleaners
+          </Button>
+        </div>
+      </div>
 
       {/* Recent Bookings Table */}
       <section>
@@ -228,7 +266,7 @@ const BookingPage = () => {
                     {recentBookings?.data?.map((booking: any) => (
                       <TableRow
                         key={booking._id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        className=" transition-colors"
                       >
                         {/* User Info */}
                         <TableCell>
@@ -636,7 +674,126 @@ const BookingPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={isMultiAssignDialogOpen}
+        onOpenChange={setIsMultiAssignDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Assign Multiple Cleaners</DialogTitle>
+            <DialogDescription>
+              Select a booking and assign multiple cleaners
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Select Booking */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Booking</label>
+              <Select
+                value={selectedBookingForMulti}
+                onValueChange={setSelectedBookingForMulti}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a booking..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {recentBookings?.data?.map((booking: any) => (
+                    <SelectItem key={booking._id} value={booking._id}>
+                      {booking.userId.fullName} - {booking.serviceType}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Cleaners</label>
+
+              <Command className="border rounded-md">
+                <CommandInput placeholder="Search cleaners..." />
+
+                <CommandList className="max-h-60 overflow-y-auto">
+                  <CommandEmpty>No cleaner found.</CommandEmpty>
+
+                  <CommandGroup>
+                    {cleaners?.data?.map((cleaner: any) => {
+                      const isSelected = selectedCleanerIds.includes(
+                        cleaner._id
+                      );
+
+                      return (
+                        <CommandItem
+                          key={cleaner._id}
+                          onSelect={() => {
+                            setSelectedCleanerIds((prev) =>
+                              isSelected
+                                ? prev.filter((id) => id !== cleaner._id)
+                                : [...prev, cleaner._id]
+                            );
+                          }}
+                          className="flex items-center justify-between cursor-pointer"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">
+                              {cleaner.fullName}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {cleaner.email}
+                            </span>
+                          </div>
+
+                          <Checkbox checked={isSelected} />
+
+                          {/* <input
+                            type="checkbox"
+                            checked={isSelected}
+                            readOnly
+                            className="h-4 w-4 rounded border-gray-300"
+                          /> */}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsMultiAssignDialogOpen(false);
+                setSelectedBookingForMulti("");
+                setSelectedCleanerIds([]);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() =>
+                assignMultipleMutation.mutate({
+                  bookingId: selectedBookingForMulti,
+                  cleanerIds: selectedCleanerIds,
+                })
+              }
+              disabled={
+                !selectedBookingForMulti ||
+                selectedCleanerIds.length === 0 ||
+                assignMultipleMutation.isPending
+              }
+            >
+              {assignMultipleMutation.isPending ? (
+                <Spinner />
+              ) : (
+                "Assign Cleaners"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}

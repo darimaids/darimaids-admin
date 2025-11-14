@@ -38,6 +38,20 @@ export const assignBooking = async (uid: any, buid: any) => {
   }
 };
 
+export const assignBookingToMultipleCleaners = async (data: any) => {
+  try {
+    const response = await privateApi.post(
+      `/api/v1/admin/adminAssignBookingToMultipleCleaners`,
+      data
+    );
+    // console.log("API response:", response.data);
+    return response?.data;
+  } catch (error) {
+    console.log("Error fetching booking:", error);
+    throw extractErrorMessage(error);
+  }
+};
+
 export const deleteBooking = async (uid: any) => {
   try {
     const response = await privateApi.delete(
