@@ -37,7 +37,6 @@ import {
   HeadingLevel,
   AlignmentType,
   TextRun,
-  ImageRun,
 } from "docx";
 import { toast } from "sonner";
 
@@ -47,29 +46,18 @@ const Disbursement = () => {
     queryFn: getDisbursement,
   });
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  // Filter only completed items
+  const completedDisbursements =
+    data?.data?.filter(
+      (item: any) => item.cleanerInfo?.status === "completed"
+    ) || [];
 
   // Get status badge variant
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case "completed":
       case "paid":
-        return "default";
+        return "success";
       case "pending":
         return "secondary";
       case "cancelled":
@@ -87,7 +75,7 @@ const Disbursement = () => {
 
   // Export to Word function
   const exportToWord = async () => {
-    if (!data?.data) return;
+    if (!completedDisbursements?.length) return;
 
     try {
       // Create table headers
@@ -101,16 +89,6 @@ const Disbursement = () => {
           new DocxTableCell({
             children: [
               new Paragraph({ text: "Service", alignment: AlignmentType.LEFT }),
-            ],
-          }),
-          new DocxTableCell({
-            children: [
-              new Paragraph({ text: "Date", alignment: AlignmentType.LEFT }),
-            ],
-          }),
-          new DocxTableCell({
-            children: [
-              new Paragraph({ text: "Time", alignment: AlignmentType.LEFT }),
             ],
           }),
           new DocxTableCell({
@@ -148,14 +126,14 @@ const Disbursement = () => {
       });
 
       // Create table rows from data
-      const tableRows = data.data.map(
+      const tableRows = completedDisbursements.map(
         (item: any) =>
           new DocxTableRow({
             children: [
               new DocxTableCell({
                 children: [
                   new Paragraph({
-                    text: `${item.user.fullName}\n${item.user.phoneNumber}`,
+                    text: `${item.workerInfo.fullName}\n${item.workerInfo.phoneNumber}`,
                     alignment: AlignmentType.LEFT,
                   }),
                 ],
@@ -164,8 +142,9 @@ const Disbursement = () => {
                 children: [
                   new Paragraph({
                     text: `${formatServiceName(
-                      item.booking.serviceType || item.booking.services
-                    )}\n${item.booking.services}`,
+                      item.cleanerInfo.bookingId.serviceType ||
+                        item.cleanerInfo.bookingId.services
+                    )}\n${item.cleanerInfo.bookingId.services}`,
                     alignment: AlignmentType.LEFT,
                   }),
                 ],
@@ -173,23 +152,7 @@ const Disbursement = () => {
               new DocxTableCell({
                 children: [
                   new Paragraph({
-                    text: formatDate(item.booking.date),
-                    alignment: AlignmentType.LEFT,
-                  }),
-                ],
-              }),
-              new DocxTableCell({
-                children: [
-                  new Paragraph({
-                    text: item.booking.time,
-                    alignment: AlignmentType.LEFT,
-                  }),
-                ],
-              }),
-              new DocxTableCell({
-                children: [
-                  new Paragraph({
-                    text: `$${item.booking.charge}`,
+                    text: `$${item.workerInfo.wallet || 0}`,
                     alignment: AlignmentType.RIGHT,
                   }),
                 ],
@@ -197,7 +160,7 @@ const Disbursement = () => {
               new DocxTableCell({
                 children: [
                   new Paragraph({
-                    text: item.booking.bookingReference,
+                    text: item.cleanerInfo.bookingId.bookingReference,
                     alignment: AlignmentType.LEFT,
                   }),
                 ],
@@ -205,7 +168,7 @@ const Disbursement = () => {
               new DocxTableCell({
                 children: [
                   new Paragraph({
-                    text: item.booking.status,
+                    text: item.cleanerInfo.status,
                     alignment: AlignmentType.LEFT,
                   }),
                 ],
@@ -213,7 +176,7 @@ const Disbursement = () => {
               new DocxTableCell({
                 children: [
                   new Paragraph({
-                    text: item.bank?.bankName || "No bank",
+                    text: item.bankDetails?.bankName || "No bank",
                     alignment: AlignmentType.LEFT,
                   }),
                 ],
@@ -221,7 +184,7 @@ const Disbursement = () => {
               new DocxTableCell({
                 children: [
                   new Paragraph({
-                    text: item.bank?.accountNumber?.toString() || "N/A",
+                    text: item.bankDetails?.accountNumber?.toString() || "N/A",
                     alignment: AlignmentType.LEFT,
                   }),
                 ],
@@ -259,7 +222,7 @@ const Disbursement = () => {
                 spacing: { after: 400 },
               }),
               new Paragraph({
-                text: `Total Records: ${data.count || data.data.length}`,
+                text: `Total Records: ${completedDisbursements.length}`,
                 alignment: AlignmentType.LEFT,
                 spacing: { after: 200 },
               }),
@@ -280,27 +243,11 @@ const Disbursement = () => {
                 spacing: { before: 400, after: 200 },
               }),
               new Paragraph({
-                text: `Total Amount: $${data.data.reduce(
+                text: `Total Amount: $${completedDisbursements.reduce(
                   (total: number, item: any) =>
-                    total + (item.booking.charge || 0),
+                    total + (item.workerInfo.wallet || 0),
                   0
                 )}`,
-                spacing: { after: 100 },
-              }),
-              new Paragraph({
-                text: `Pending Payments: ${
-                  data.data.filter(
-                    (item: any) => item.booking.status === "pending"
-                  ).length
-                }`,
-                spacing: { after: 100 },
-              }),
-              new Paragraph({
-                text: `Completed Payments: ${
-                  data.data.filter(
-                    (item: any) => item.booking.status === "completed"
-                  ).length
-                }`,
                 spacing: { after: 100 },
               }),
             ],
@@ -320,6 +267,7 @@ const Disbursement = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      toast.success("Export completed successfully!");
     } catch (error) {
       console.error("Error generating Word document:", error);
       toast.error("Error generating export file. Please try again.");
@@ -334,13 +282,13 @@ const Disbursement = () => {
             <div>
               <CardTitle>Disbursements</CardTitle>
               <CardDescription>
-                Worker, Booking, and Bank Information
+                Completed Worker Payments - Booking and Bank Information
               </CardDescription>
             </div>
             <Button
               onClick={exportToWord}
               className="flex items-center gap-2"
-              disabled={isLoading || !data?.data?.length}
+              disabled={isLoading || !completedDisbursements?.length}
             >
               <Download className="w-4 h-4" />
               Export to Word
@@ -357,8 +305,6 @@ const Disbursement = () => {
                       <TableRow>
                         <TableHead className="min-w-[150px]">Cleaner</TableHead>
                         <TableHead className="min-w-[120px]">Service</TableHead>
-                        <TableHead className="min-w-[100px]">Date</TableHead>
-                        <TableHead className="min-w-20">Time</TableHead>
                         <TableHead className="min-w-[100px]">Amount</TableHead>
                         <TableHead className="min-w-[140px]">
                           Booking Ref
@@ -371,58 +317,54 @@ const Disbursement = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data?.data?.length > 0 ? (
-                        data.data.map((item: any) => (
-                          <TableRow key={item.booking._id} className="">
+                      {completedDisbursements.length > 0 ? (
+                        completedDisbursements.map((item: any) => (
+                          <TableRow key={item.cleanerInfo._id} className="">
                             <TableCell>
                               <div>
                                 <p className="font-medium text-sm">
-                                  {item.user.fullName}
+                                  {item.workerInfo.fullName}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {item.user.phoneNumber}
+                                  {item.workerInfo.phoneNumber}
                                 </p>
                               </div>
                             </TableCell>
                             <TableCell>
                               <span className="text-sm capitalize">
                                 {formatServiceName(
-                                  item.booking.serviceType ||
-                                    item.booking.services
+                                  item.cleanerInfo.bookingId.serviceType ||
+                                    item.cleanerInfo.bookingId.services
                                 )}
                               </span>
                               <p className="text-xs text-muted-foreground">
-                                {item.booking.services}
+                                {item.cleanerInfo.bookingId.services}
                               </p>
                             </TableCell>
-                            <TableCell className="text-sm">
-                              {formatDate(item.booking.date)}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {item.booking.time}
-                            </TableCell>
                             <TableCell className="font-semibold text-sm">
-                              {`$${item.booking.charge}`}
+                              {`$${item.workerInfo.wallet || 0}`}
                             </TableCell>
                             <TableCell>
                               <code className="text-xs bg-muted px-2 py-1 rounded">
-                                {item.booking.bookingReference}
+                                {item.cleanerInfo.bookingId.bookingReference}
                               </code>
                             </TableCell>
                             <TableCell>
                               <Badge
-                                variant={getStatusVariant(item.booking.status)}
+                                variant={getStatusVariant(
+                                  item.cleanerInfo.status
+                                )}
                                 className="text-xs"
                               >
-                                {item.booking.status}
+                                {item.cleanerInfo.status}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-sm">
-                              {item.bank?.bankName || "No bank"}
+                              {item.bankDetails?.bankName || "No bank"}
                             </TableCell>
                             <TableCell>
                               <code className="text-sm font-mono">
-                                {item.bank?.accountNumber || "N/A"}
+                                {item.bankDetails?.accountNumber || "N/A"}
                               </code>
                             </TableCell>
                           </TableRow>
@@ -430,10 +372,10 @@ const Disbursement = () => {
                       ) : (
                         <TableRow>
                           <TableCell
-                            colSpan={10}
+                            colSpan={7}
                             className="text-center py-8 text-muted-foreground"
                           >
-                            No disbursements found
+                            No completed disbursements found
                           </TableCell>
                         </TableRow>
                       )}
@@ -451,20 +393,18 @@ const Disbursement = () => {
 
 export default Disbursement;
 
-
 const TableSkeleton = () => {
   return (
     <div className="mt-5">
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className="grid grid-cols-6 gap-4 py-4 border-b last:border-0"
+          className="grid grid-cols-5 gap-4 py-4 border-b last:border-0"
         >
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-4 w-20" />
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-14" />
           <Skeleton className="h-6 w-16 rounded-full" />
         </div>
       ))}
