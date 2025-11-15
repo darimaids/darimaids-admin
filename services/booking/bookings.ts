@@ -33,7 +33,20 @@ export const assignBooking = async (uid: any, buid: any) => {
     // console.log("API response:", response.data);
     return response?.data;
   } catch (error) {
-    console.log("Error fetching booking:", error);
+    console.log("Error assigning booking:", error);
+    throw extractErrorMessage(error);
+  }
+};
+
+export const revokeCleanerFromBooking = async (uid: any, buid: any) => {
+  try {
+    const response = await privateApi.post(
+      `/api/v1/admin/revoke-booking-from-cleaner?workerId=${uid}&bookingId=${buid}`
+    );
+    // console.log("API response:", response.data);
+    return response?.data;
+  } catch (error) {
+    console.log("Error revoking booking:", error);
     throw extractErrorMessage(error);
   }
 };
@@ -47,7 +60,7 @@ export const assignBookingToMultipleCleaners = async (data: any) => {
     // console.log("API response:", response.data);
     return response?.data;
   } catch (error) {
-    console.log("Error fetching booking:", error);
+    console.log("Error assigning booking:", error);
     throw extractErrorMessage(error);
   }
 };
@@ -60,7 +73,7 @@ export const deleteBooking = async (uid: any) => {
     // console.log("API response:", response.data);
     return response?.data;
   } catch (error) {
-    console.log("Error fetching booking:", error);
+    console.log("Error deleting booking:", error);
     throw extractErrorMessage(error);
   }
 };

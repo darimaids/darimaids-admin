@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Eye, UserPlus, Trash2 } from "lucide-react";
+import { MoreVertical, Eye, UserPlus, Trash2, Ban } from "lucide-react";
 
 // components
 import DashboardStatCard from "@/components/ui/statcard";
@@ -74,6 +74,7 @@ import {
   viewBooking,
   assignBooking,
   assignBookingToMultipleCleaners,
+  revokeCleanerFromBooking,
   deleteBooking,
 } from "@/services/booking/bookings";
 import { allCleaners } from "@/services/cleaners/cleaners";
@@ -91,6 +92,9 @@ const BookingPage = () => {
   const [isMultiAssignDialogOpen, setIsMultiAssignDialogOpen] = useState(false);
   const [selectedBookingForMulti, setSelectedBookingForMulti] = useState("");
   const [selectedCleanerIds, setSelectedCleanerIds] = useState<string[]>([]);
+  const [isRevokeDialogOpen, setIsRevokeDialogOpen] = useState(false);
+  const [selectedCleanerToRevoke, setSelectedCleanerToRevoke] =
+    useState<string>("");
 
   const { data: bookingStats, isLoading: isBookingStatsLoading } = useQuery({
     queryKey: ["bookingStat"],
@@ -134,6 +138,26 @@ const BookingPage = () => {
     },
     onError: (error: any) => {
       toast.error(error || "Failed to assign cleaner");
+    },
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: ({
+      bookingId,
+      cleanerId,
+    }: {
+      bookingId: string;
+      cleanerId: string;
+    }) => revokeCleanerFromBooking(cleanerId, bookingId),
+    onSuccess: (data) => {
+      toast.success(data?.message || "Cleaner revoked successfully!");
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      setIsRevokeDialogOpen(false);
+      setSelectedBookingId(null);
+      setSelectedCleanerToRevoke("");
+    },
+    onError: (error: any) => {
+      toast.error(error || "Failed to revoke cleaner");
     },
   });
 
@@ -322,8 +346,8 @@ const BookingPage = () => {
                             <Badge
                               variant={
                                 booking.status === "pending"
-                                  ? "secondary"
-                                  : booking.status === "completed"
+                                  ? "pending"
+                                  : booking.status === "successful"
                                   ? "success"
                                   : "destructive"
                               }
@@ -364,6 +388,17 @@ const BookingPage = () => {
                                   <UserPlus className="mr-2 h-4 w-4" />
                                   Assign Cleaner
                                 </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedBookingId(booking._id);
+                                    setSelectedCleanerToRevoke("");
+                                    setIsRevokeDialogOpen(true);
+                                  }}
+                                >
+                                  <Ban className="mr-2 h-4 w-4" />
+                                  Revoke Cleaner
+                                </DropdownMenuItem>
+
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={() =>
@@ -549,7 +584,7 @@ const BookingPage = () => {
                         variant={
                           bookingDetails.data.status === "pending"
                             ? "secondary"
-                            : bookingDetails.data.status === "completed"
+                            : bookingDetails.data.status === "successful"
                             ? "success"
                             : "destructive"
                         }
@@ -567,7 +602,7 @@ const BookingPage = () => {
                       <Badge
                         variant={
                           bookingDetails.data.isAssigned
-                            ? "success"
+                            ? "outline"
                             : "secondary"
                         }
                       >
@@ -673,6 +708,72 @@ const BookingPage = () => {
               disabled={!selectedCleanerId || assignMutation.isPending}
             >
               {assignMutation.isPending ? <Spinner /> : "Assign Cleaner"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isRevokeDialogOpen} onOpenChange={setIsRevokeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Revoke Cleaner from Booking</DialogTitle>
+            <DialogDescription>
+              Select a cleaner to revoke from this booking
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Cleaner</label>
+              <Select
+                value={selectedCleanerToRevoke}
+                onValueChange={setSelectedCleanerToRevoke}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a cleaner..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {cleaners?.data?.map((cleaner: any) => (
+                    <SelectItem key={cleaner._id} value={cleaner._id}>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-start">
+                          {cleaner.fullName}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {cleaner.email}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsRevokeDialogOpen(false);
+                setSelectedCleanerToRevoke("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedBookingId && selectedCleanerToRevoke) {
+                  revokeMutation.mutate({
+                    bookingId: selectedBookingId,
+                    cleanerId: selectedCleanerToRevoke,
+                  });
+                } else {
+                  toast.error("Please select a cleaner");
+                }
+              }}
+              disabled={revokeMutation.isPending || !selectedCleanerToRevoke}
+            >
+              {revokeMutation.isPending ? <Spinner /> : "Revoke Cleaner"}
             </Button>
           </div>
         </DialogContent>
