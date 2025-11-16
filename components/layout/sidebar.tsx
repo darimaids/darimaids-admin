@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, Calendar, DollarSign, LogOut, Menu, List } from "lucide-react";
+import { Home, Users, Calendar, DollarSign, LogOut, Menu, List, AppWindowMacIcon, Accessibility, IdCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Image from "next/image";
@@ -15,6 +15,7 @@ const navItems = [
   { name: "Cleaners", icon: Users, href: "/dashboard/cleaners" },
   { name: "Disburements", icon: DollarSign, href: "/dashboard/disbursement" },
   { name: "Service Catalog", icon: List, href: "/dashboard/servicecatalog" },
+  { name: "Admins", icon: IdCard, href: "/dashboard/admins" },
 ];
 
 export default function Sidebar() {

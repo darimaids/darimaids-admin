@@ -37,7 +37,7 @@ const CreateServicePage = () => {
   });
 
   return (
-    <div className="p-10 max-w-3xl mx-auto">
+    <div className="sm:p-10 max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold mb-8">Create New Service</h1>
 
       <div className="space-y-6">
