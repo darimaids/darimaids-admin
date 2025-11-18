@@ -321,7 +321,7 @@ const Page = () => {
                       {recentBooking?.data?.map((booking: any) => (
                         <TableRow
                           key={booking._id}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          className=""
                         >
                           <TableCell>
                             <div className="flex flex-col">
@@ -362,8 +362,8 @@ const Page = () => {
                             <Badge
                               variant={
                                 booking.status === "pending"
-                                  ? "secondary"
-                                  : booking.status === "completed"
+                                  ? "pending"
+                                  : booking.status === "successful"
                                   ? "success"
                                   : "destructive"
                               }
