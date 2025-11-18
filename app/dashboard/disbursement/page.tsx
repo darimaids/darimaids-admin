@@ -26,18 +26,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 // API
 import { getDisbursement } from "@/services/disbursement/disbursement";
 
-// For Word document generation
-import {
-  Document,
-  Packer,
-  Paragraph,
-  Table as DocxTable,
-  TableCell as DocxTableCell,
-  TableRow as DocxTableRow,
-  HeadingLevel,
-  AlignmentType,
-  TextRun,
-} from "docx";
+// For Excel export
+import * as XLSX from "xlsx";
 import { toast } from "sonner";
 
 const Disbursement = () => {
@@ -73,203 +63,116 @@ const Disbursement = () => {
     return service.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
-  // Export to Word function
-  const exportToWord = async () => {
+  // Export to Excel function
+  const exportToExcel = async () => {
     if (!completedDisbursements?.length) return;
 
     try {
-      // Create table headers
-      const tableHeaders = new DocxTableRow({
-        children: [
-          new DocxTableCell({
-            children: [
-              new Paragraph({ text: "Cleaner", alignment: AlignmentType.LEFT }),
-            ],
-          }),
-          new DocxTableCell({
-            children: [
-              new Paragraph({ text: "Service", alignment: AlignmentType.LEFT }),
-            ],
-          }),
-          new DocxTableCell({
-            children: [
-              new Paragraph({ text: "Amount", alignment: AlignmentType.RIGHT }),
-            ],
-          }),
-          new DocxTableCell({
-            children: [
-              new Paragraph({
-                text: "Booking Ref",
-                alignment: AlignmentType.LEFT,
-              }),
-            ],
-          }),
-          new DocxTableCell({
-            children: [
-              new Paragraph({ text: "Status", alignment: AlignmentType.LEFT }),
-            ],
-          }),
-          new DocxTableCell({
-            children: [
-              new Paragraph({ text: "Bank", alignment: AlignmentType.LEFT }),
-            ],
-          }),
-          new DocxTableCell({
-            children: [
-              new Paragraph({
-                text: "Account Number",
-                alignment: AlignmentType.LEFT,
-              }),
-            ],
-          }),
-        ],
-      });
+      // Prepare data for Excel
+      const excelData = completedDisbursements.map((item: any) => ({
+        "Cleaner Name": item.workerInfo.fullName,
+        "Phone Number": item.workerInfo.phoneNumber,
+        "Service Type": formatServiceName(
+          item.cleanerInfo.bookingId.serviceType ||
+            item.cleanerInfo.bookingId.services
+        ),
+        "Service Details": item.cleanerInfo.bookingId.services,
+        "Amount ($)": item.workerInfo.wallet || 0,
+        "Booking Reference": item.cleanerInfo.bookingId.bookingReference,
+        Status: item.cleanerInfo.status,
+        "Bank Name": item.bankDetails?.bankName || "No bank",
+        "Account Number": item.bankDetails?.accountNumber?.toString() || "N/A",
+      }));
 
-      // Create table rows from data
-      const tableRows = completedDisbursements.map(
-        (item: any) =>
-          new DocxTableRow({
-            children: [
-              new DocxTableCell({
-                children: [
-                  new Paragraph({
-                    text: `${item.workerInfo.fullName}\n${item.workerInfo.phoneNumber}`,
-                    alignment: AlignmentType.LEFT,
-                  }),
-                ],
-              }),
-              new DocxTableCell({
-                children: [
-                  new Paragraph({
-                    text: `${formatServiceName(
-                      item.cleanerInfo.bookingId.serviceType ||
-                        item.cleanerInfo.bookingId.services
-                    )}\n${item.cleanerInfo.bookingId.services}`,
-                    alignment: AlignmentType.LEFT,
-                  }),
-                ],
-              }),
-              new DocxTableCell({
-                children: [
-                  new Paragraph({
-                    text: `$${item.workerInfo.wallet || 0}`,
-                    alignment: AlignmentType.RIGHT,
-                  }),
-                ],
-              }),
-              new DocxTableCell({
-                children: [
-                  new Paragraph({
-                    text: item.cleanerInfo.bookingId.bookingReference,
-                    alignment: AlignmentType.LEFT,
-                  }),
-                ],
-              }),
-              new DocxTableCell({
-                children: [
-                  new Paragraph({
-                    text: item.cleanerInfo.status,
-                    alignment: AlignmentType.LEFT,
-                  }),
-                ],
-              }),
-              new DocxTableCell({
-                children: [
-                  new Paragraph({
-                    text: item.bankDetails?.bankName || "No bank",
-                    alignment: AlignmentType.LEFT,
-                  }),
-                ],
-              }),
-              new DocxTableCell({
-                children: [
-                  new Paragraph({
-                    text: item.bankDetails?.accountNumber?.toString() || "N/A",
-                    alignment: AlignmentType.LEFT,
-                  }),
-                ],
-              }),
-            ],
-          })
+      // Calculate total amount
+      const totalAmount = completedDisbursements.reduce(
+        (total: number, item: any) => total + (item.workerInfo.wallet || 0),
+        0
       );
 
-      // Create the document
-      const doc = new Document({
-        sections: [
-          {
-            children: [
-              // Header with title and date
-              new Paragraph({
-                text: "DARIMAIDS",
-                heading: HeadingLevel.HEADING_1,
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 400 },
-              }),
-              new Paragraph({
-                text: "Disbursements Report",
-                heading: HeadingLevel.HEADING_2,
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 400 },
-              }),
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `Generated on: ${new Date().toLocaleDateString()}`,
-                    bold: true,
-                  }),
-                ],
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 400 },
-              }),
-              new Paragraph({
-                text: `Total Records: ${completedDisbursements.length}`,
-                alignment: AlignmentType.LEFT,
-                spacing: { after: 200 },
-              }),
+      // Add summary rows
+      const summaryData = [
+        {},
+        {
+          "Cleaner Name": "SUMMARY",
+          "Phone Number": "",
+          "Service Type": "",
+          "Service Details": "",
+          "Amount ($)": "",
+          "Booking Reference": "",
+          Status: "",
+          "Bank Name": "",
+          "Account Number": "",
+        },
+        {
+          "Cleaner Name": "Total Records:",
+          "Phone Number": completedDisbursements.length,
+          "Service Type": "",
+          "Service Details": "",
+          "Amount ($)": "",
+          "Booking Reference": "",
+          Status: "",
+          "Bank Name": "",
+          "Account Number": "",
+        },
+        {
+          "Cleaner Name": "Total Amount:",
+          "Phone Number": `$${totalAmount}`,
+          "Service Type": "",
+          "Service Details": "",
+          "Amount ($)": "",
+          "Booking Reference": "",
+          Status: "",
+          "Bank Name": "",
+          "Account Number": "",
+        },
+        {
+          "Cleaner Name": "Generated on:",
+          "Phone Number": new Date().toLocaleDateString(),
+          "Service Type": "",
+          "Service Details": "",
+          "Amount ($)": "",
+          "Booking Reference": "",
+          Status: "",
+          "Bank Name": "",
+          "Account Number": "",
+        },
+      ];
 
-              // Table
-              new DocxTable({
-                width: { size: 100, type: "pct" },
-                rows: [tableHeaders, ...tableRows],
-              }),
+      // Combine data
+      const finalData = [...excelData, ...summaryData];
 
-              // Footer with summary
-              new Paragraph({
-                text: "\n",
-              }),
-              new Paragraph({
-                text: "Summary",
-                heading: HeadingLevel.HEADING_3,
-                spacing: { before: 400, after: 200 },
-              }),
-              new Paragraph({
-                text: `Total Amount: $${completedDisbursements.reduce(
-                  (total: number, item: any) =>
-                    total + (item.workerInfo.wallet || 0),
-                  0
-                )}`,
-                spacing: { after: 100 },
-              }),
-            ],
-          },
-        ],
-      });
+      // Create worksheet
+      const worksheet = XLSX.utils.json_to_sheet(finalData);
 
-      // Generate the document and trigger download
-      const blob = await Packer.toBlob(doc);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `darimaid-disbursements-${
+      // Set column widths
+      worksheet["!cols"] = [
+        { wch: 20 }, // Cleaner Name
+        { wch: 15 }, // Phone Number
+        { wch: 20 }, // Service Type
+        { wch: 20 }, // Service Details
+        { wch: 12 }, // Amount
+        { wch: 18 }, // Booking Reference
+        { wch: 12 }, // Status
+        { wch: 20 }, // Bank Name
+        { wch: 18 }, // Account Number
+      ];
+
+      // Create workbook
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Disbursements");
+
+      // Generate file name with date
+      const fileName = `darimaid-disbursements-${
         new Date().toISOString().split("T")[0]
-      }.docx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      }.xlsx`;
+
+      // Write file
+      XLSX.writeFile(workbook, fileName);
+
       toast.success("Export completed successfully!");
     } catch (error) {
-      console.error("Error generating Word document:", error);
+      console.error("Error generating Excel file:", error);
       toast.error("Error generating export file. Please try again.");
     }
   };
@@ -286,12 +189,12 @@ const Disbursement = () => {
               </CardDescription>
             </div>
             <Button
-              onClick={exportToWord}
+              onClick={exportToExcel}
               className="flex items-center gap-2"
               disabled={isLoading || !completedDisbursements?.length}
             >
               <Download className="w-4 h-4" />
-              Export to Word
+              Export to Excel
             </Button>
           </CardHeader>
           <CardContent className="px-8 sm:p-6">

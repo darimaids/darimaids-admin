@@ -36,7 +36,6 @@ const CreateFaqPage = () => {
       <h1 className="text-3xl font-bold mb-8">Create New FAQ</h1>
 
       <div className="space-y-6">
-        {/* QUESTION */}
         <div>
           <label className="block mb-2 font-medium">Question</label>
           <Input
