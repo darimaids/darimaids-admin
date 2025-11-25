@@ -61,6 +61,7 @@ import DashboardStatCard from "@/components/ui/statcard";
 
 // ICONS
 import { Plus } from "lucide-react";
+import Link from "next/link";
 
 const CleanersPage = () => {
   const queryClient = useQueryClient();
@@ -141,10 +142,12 @@ const CleanersPage = () => {
         </section>
 
         <div className="flex justify-end">
-          <Button>
-            <Plus />
-            Add Cleaner
-          </Button>
+          <Link href="/dashboard/cleaners/create-cleaner">
+            <Button>
+              <Plus />
+              Add Cleaner
+            </Button>
+          </Link>
         </div>
       </div>
 

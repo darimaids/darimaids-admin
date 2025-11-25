@@ -16,12 +16,18 @@ const CreateAboutPage = () => {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [openTime, setOpenTime] = useState("");
+  const [closingTime, setClosingTime] = useState("");
 
   const mutation = useMutation({
     mutationFn: () =>
       createAbout({
         title,
         description,
+        location,
+        openTime,
+        closingTime,
       }),
     onSuccess: () => {
       toast.success("About section created successfully!");
@@ -54,6 +60,36 @@ const CreateAboutPage = () => {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="We are the best janitor in town..."
             rows={5}
+          />
+        </div>
+
+        {/* LOCATION */}
+        <div>
+          <label className="block mb-2 font-medium">Location</label>
+          <Input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Miami Beach"
+          />
+        </div>
+
+        {/* OPEN TIME */}
+        <div>
+          <label className="block mb-2 font-medium">Open Time</label>
+          <Input
+            value={openTime}
+            onChange={(e) => setOpenTime(e.target.value)}
+            placeholder="8am"
+          />
+        </div>
+
+        {/* CLOSING TIME */}
+        <div>
+          <label className="block mb-2 font-medium">Closing Time</label>
+          <Input
+            value={closingTime}
+            onChange={(e) => setClosingTime(e.target.value)}
+            placeholder="4pm"
           />
         </div>
 

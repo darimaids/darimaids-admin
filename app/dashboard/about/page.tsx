@@ -42,6 +42,9 @@ interface AboutItem {
   _id: string;
   title: string;
   description: string;
+  location: string;
+  openTime: string;
+  closingTime: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -173,13 +176,13 @@ const AdminAboutPage = () => {
                       Edit
                     </button>
 
-                    {/* <button
+                    <button
                       className="flex items-center gap-2 p-2 w-full text-red-500 hover:bg-gray-100 dark:hover:bg-[#333] rounded"
                       onClick={() => setDeleteId(item._id)}
                     >
                       <Trash2 className="w-4 h-4" />
                       Delete
-                    </button> */}
+                    </button>
                   </PopoverContent>
                 </Popover>
               </div>
@@ -187,6 +190,7 @@ const AdminAboutPage = () => {
           ))}
       </div>
 
+      {/* VIEW MODAL */}
       {/* VIEW MODAL */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent className="max-w-2xl">
@@ -198,22 +202,51 @@ const AdminAboutPage = () => {
 
           <div className="space-y-4 mt-3">
             {/* Description */}
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-              {viewData?.description}
-            </p>
+            <div>
+              <h3 className="font-medium">Description</h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                {viewData?.description}
+              </p>
+            </div>
+
+            {/* Location */}
+            <div>
+              <h3 className="font-medium">Location</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                {viewData?.location}
+              </p>
+            </div>
+
+            {/* Open Time */}
+            <div>
+              <h3 className="font-medium">Open Time</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                {viewData?.openTime}
+              </p>
+            </div>
+
+            {/* Closing Time */}
+            <div>
+              <h3 className="font-medium">Closing Time</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                {viewData?.closingTime}
+              </p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* EDIT MODAL */}
+      {/* EDIT MODAL */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit About Us</DialogTitle>
           </DialogHeader>
 
           {selected && (
             <div className="space-y-5">
+              {/* Title */}
               <div>
                 <label className="block mb-2 font-medium">Title</label>
                 <Input
@@ -224,17 +257,50 @@ const AdminAboutPage = () => {
                 />
               </div>
 
+              {/* Description */}
               <div>
                 <label className="block mb-2 font-medium">Description</label>
                 <Textarea
                   rows={5}
                   value={selected.description}
                   onChange={(e) =>
-                    setSelected({
-                      ...selected,
-                      description: e.target.value,
-                    })
+                    setSelected({ ...selected, description: e.target.value })
                   }
+                />
+              </div>
+
+              {/* Location */}
+              <div>
+                <label className="block mb-2 font-medium">Location</label>
+                <Input
+                  value={selected.location}
+                  onChange={(e) =>
+                    setSelected({ ...selected, location: e.target.value })
+                  }
+                />
+              </div>
+
+              {/* Open Time */}
+              <div>
+                <label className="block mb-2 font-medium">Open Time</label>
+                <Input
+                  value={selected.openTime}
+                  onChange={(e) =>
+                    setSelected({ ...selected, openTime: e.target.value })
+                  }
+                  placeholder="e.g., 8am"
+                />
+              </div>
+
+              {/* Closing Time */}
+              <div>
+                <label className="block mb-2 font-medium">Closing Time</label>
+                <Input
+                  value={selected.closingTime}
+                  onChange={(e) =>
+                    setSelected({ ...selected, closingTime: e.target.value })
+                  }
+                  placeholder="e.g., 4pm"
                 />
               </div>
 
