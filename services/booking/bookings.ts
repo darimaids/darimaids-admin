@@ -12,6 +12,19 @@ export const bookings = async () => {
   }
 };
 
+export const createBooking = async (data: any) => {
+  try {
+    const response = await publicApi.post(
+      "/api/v1/booking/createBookingPayment",
+      data
+    );
+    return response?.data;
+  } catch (error) {
+    console.log("Error creating booking:", error);
+    throw new Error(extractErrorMessage(error));
+  }
+};
+
 export const viewBooking = async (uid: any) => {
   try {
     const response = await privateApi.get(

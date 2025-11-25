@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Eye, UserPlus, Trash2, Ban } from "lucide-react";
+import { MoreVertical, Eye, UserPlus, Trash2, Ban, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // components
 import DashboardStatCard from "@/components/ui/statcard";
@@ -81,6 +82,7 @@ import { allCleaners } from "@/services/cleaners/cleaners";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const BookingPage = () => {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null
@@ -254,7 +256,15 @@ const BookingPage = () => {
           ))}
         </section>
 
-        <div className="flex justify-end">
+        <div className="flex gap-2 justify-end items-center">
+          <Button
+            onClick={() => router.push("/dashboard/bookings/create-booking")}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Create Booking
+          </Button>
+
           <Button onClick={() => setIsMultiAssignDialogOpen(true)}>
             Assign Multiple Cleaners
           </Button>
