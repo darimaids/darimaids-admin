@@ -508,7 +508,7 @@ const BookingPage = () => {
                       Number of Cleaners:
                     </span>
                     <p className="font-medium">
-                      {bookingDetails.data.cleaners}
+                      {bookingDetails.data.assignedCleanerCount}
                     </p>
                   </div>
                   <div>
@@ -574,20 +574,6 @@ const BookingPage = () => {
                   <div>
                     <span className="text-muted-foreground">
                       Payment Status:
-                    </span>
-                    <p className="font-medium">
-                      <Badge
-                        variant={
-                          bookingDetails.data.isPaid ? "success" : "secondary"
-                        }
-                      >
-                        {bookingDetails.data.isPaid ? "Paid" : "Unpaid"}
-                      </Badge>
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">
-                      Booking Status:
                     </span>
                     <p className="font-medium">
                       <Badge
