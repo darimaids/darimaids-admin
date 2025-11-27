@@ -63,6 +63,34 @@ import DashboardStatCard from "@/components/ui/statcard";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
+type WorkExperience = {
+  yearOfExperience: number | string;
+  preferredService: string;
+  preferredWorkArea: string;
+  availability: string;
+  shortBio: string;
+};
+
+export interface Cleaner {
+  _id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  county?: string;
+  wallet?: number;
+  gender: string;
+  dateOfBirth: string;
+  workExperience?: WorkExperience[];
+  isBlocked: boolean;
+  isVerified: boolean;
+  role: "admin" | "superAdmin" | "worker" | string;
+  createdAt: string;
+  updatedAt: string;
+  image?: string;
+}
+
+
 const CleanersPage = () => {
   const queryClient = useQueryClient();
   const [selectedCleanerId, setSelectedCleanerId] = useState<string | null>(
@@ -76,18 +104,21 @@ const CleanersPage = () => {
     queryFn: workerStat,
   });
 
-  const { data: cleanersData, isLoading: isCleanersLoading } = useQuery({
+  const { data: cleanersData, isLoading: isCleanersLoading } = useQuery<{
+    data: Cleaner[];
+  }>({
     queryKey: ["cleaners"],
     queryFn: allCleaners,
   });
 
-  const { data: cleanerDetails, isLoading: isCleanerDetailsLoading } = useQuery(
-    {
+  const { data: cleanerDetails, isLoading: isCleanerDetailsLoading } =
+    useQuery<{
+      data: Cleaner;
+    }>({
       queryKey: ["viewCleaner", selectedCleanerId],
-      queryFn: () => viewCleaner(selectedCleanerId),
+      queryFn: () => viewCleaner(selectedCleanerId as string),
       enabled: !!selectedCleanerId && isViewDialogOpen,
-    }
-  );
+    });
 
   const deleteMutation = useMutation({
     mutationFn: (cleanerId: string) => deleteCleaner(cleanerId),
@@ -184,92 +215,90 @@ const CleanersPage = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {cleanersData?.data?.map((cleaner: any) => (
-                        <TableRow
-                          key={cleaner._id}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                        >
-                          {/* Cleaner Info */}
-                          <TableCell className="flex items-center gap-3">
-                            <img
-                              src={
-                                cleaner.image ||
-                                "https://via.placeholder.com/40x40.png?text=C"
-                              }
-                              alt={cleaner.fullName}
-                              className="w-10 h-10 rounded-full object-cover"
-                            />
-                            <div>
-                              <p className="font-medium text-sm">
-                                {cleaner.fullName}
-                              </p>
-                              <p className="text-xs text-muted-foreground truncate max-w-[150px]">
-                                {cleaner.address}
-                              </p>
-                            </div>
-                          </TableCell>
+                      {cleanersData?.data
+                        ?.filter(
+                          (cleaner: Cleaner) => cleaner.role === "worker"
+                        )
+                        ?.map((cleaner: Cleaner) => (
+                          <TableRow
+                            key={cleaner._id}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          >
+                            {/* Cleaner Info */}
+                            <TableCell className="flex items-center gap-3">
+                              <div>
+                                <p className="font-medium text-sm">
+                                  {cleaner.fullName}
+                                </p>
+                                <p className="text-xs text-muted-foreground truncate max-w-[150px]">
+                                  {cleaner.address}
+                                </p>
+                              </div>
+                            </TableCell>
 
-                          <TableCell className="text-sm">
-                            {cleaner.email}
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {cleaner.phoneNumber}
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {cleaner.gender}
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {cleaner.workExperience?.[0]?.yearOfExperience ||
-                              "N/A"}{" "}
-                            yrs
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                cleaner.isVerified ? "success" : "secondary"
-                              }
-                              className="text-xs"
-                            >
-                              {cleaner.isVerified ? "Verified" : "Unverified"}
-                            </Badge>
-                          </TableCell>
+                            <TableCell className="text-sm">
+                              {cleaner.email}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {cleaner.phoneNumber}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {cleaner.gender}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {cleaner.workExperience?.[0]?.yearOfExperience ||
+                                "N/A"}{" "}
+                              yrs
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  cleaner.isVerified ? "success" : "secondary"
+                                }
+                                className="text-xs"
+                              >
+                                {cleaner.isVerified ? "Verified" : "Unverified"}
+                              </Badge>
+                            </TableCell>
 
-                          {/* Actions */}
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => handleViewCleaner(cleaner._id)}
-                                >
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View Cleaner
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handleDeleteCleaner(cleaner._id)
-                                  }
-                                  className="text-red-600 focus:text-red-600"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete Cleaner
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            {/* Actions */}
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleViewCleaner(cleaner._id)
+                                    }
+                                  >
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Cleaner
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleDeleteCleaner(cleaner._id)
+                                    }
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Cleaner
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                     </TableBody>
                   </Table>
                 </div>
@@ -296,14 +325,6 @@ const CleanersPage = () => {
           ) : cleanerDetails?.data ? (
             <div className="space-y-6">
               <div className="flex items-center gap-4">
-                <img
-                  src={
-                    cleanerDetails.data.image ||
-                    "https://via.placeholder.com/80x80.png?text=C"
-                  }
-                  alt={cleanerDetails.data.fullName}
-                  className="w-20 h-20 rounded-full object-cover"
-                />
                 <div>
                   <h3 className="font-semibold text-lg">
                     {cleanerDetails.data.fullName}
