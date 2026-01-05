@@ -4,65 +4,57 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 // components
-import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
-// store
-import { useAdminStore } from "@/store/useAdminStore";
-
 // api
-import { login } from "@/services/auth/authentication";
+import { resetPassword } from "@/services/auth/authentication";
 
 // icons
 import { EyeOff, Eye } from "lucide-react";
-import Link from "next/link";
 
-const LoginPage = () => {
+const ResetPassword = () => {
   const router = useRouter();
-  const { setAdminData } = useAdminStore();
-  const [email, setEmail] = useState("");
+
+  const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: login,
+    mutationFn: resetPassword,
     onSuccess: (res: any) => {
-      if (res?.success && res?.data?.token && res?.data?.user) {
-        const { token, user } = res.data;
+      if (res?.success) {
+        toast.success(res?.message || "Password reset successfully");
 
-        sessionStorage.setItem("accessToken", token);
-        sessionStorage.setItem("fullName", user.fullName || "");
-        sessionStorage.setItem("email", user.email || "");
-
-        setAdminData(token, user);
-
-        toast.success("Login Successful!");
-        router.push("/dashboard/overview");
+        // Redirect user to login page
+        router.push("/login");
       } else {
-        toast.error("Login failed. Please try again.");
+        toast.error("Something went wrong. Please try again.");
       }
     },
     onError: (error: any) => {
-      // console.error("Login Error:", error);
-      toast.error(error);
+      console.error("Reset Password Error:", error);
+      toast.error(error || "An error occurred");
     },
   });
 
-  const handleLogin = () => {
-    if (!email || !password) {
-      toast.info("Please fill in all fields.");
+  const handleSubmit = () => {
+    if (!token || !password) {
+      toast.info("Please enter OTP and new password.");
       return;
     }
-    mutate({ email, password });
+
+    mutate({ token, password });
   };
 
   return (
     <div className="min-h-screen bg-[#6A4AAD] flex justify-center items-center px-4">
       <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl py-10 sm:py-16 px-6 sm:px-12 w-full sm:w-[584px] shadow-lg">
+        {/* Logo */}
         <div className="flex justify-center mb-4">
           <Image
             src="/d_login.svg"
@@ -72,32 +64,35 @@ const LoginPage = () => {
           />
         </div>
 
+        {/* Header */}
         <h1 className="text-lg sm:text-xl font-semibold text-center dark:text-white mb-8">
-          Log in to your portal
+          Reset Password
         </h1>
 
+        {/* Form */}
         <div className="space-y-4">
           <div>
             <label className="block text-sm text-[#666] dark:text-gray-300 mb-1">
-              Email Address
+              OTP Code
             </label>
             <Input
-              type="email"
-              placeholder="Enter your Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              placeholder="Enter OTP"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              className="w-full text-center tracking-[6px] text-lg dark:text-white font-medium"
             />
           </div>
 
           <div>
             <label className="block text-sm text-[#666] dark:text-gray-300 mb-1">
-              Password
+              New Password
             </label>
 
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
+                placeholder="Enter new password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="pr-10"
@@ -113,25 +108,17 @@ const LoginPage = () => {
             </div>
           </div>
 
-          <Link href="/forgot-password" className="block text-end">
-            <div className="">
-              <p className="font-semibold text-[#6A4AAD] cursor-pointer">
-                Forgot Password?
-              </p>
-            </div>
-          </Link>
-
           <Button
             className="w-full py-6 mt-4 text-white font-semibold"
             disabled={isPending}
-            onClick={handleLogin}
+            onClick={handleSubmit}
           >
             {isPending ? (
               <span className="flex items-center gap-2 justify-center">
                 <Spinner />
               </span>
             ) : (
-              "Login"
+              "Reset Password"
             )}
           </Button>
         </div>
@@ -140,4 +127,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default ResetPassword;

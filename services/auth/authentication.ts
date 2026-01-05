@@ -21,7 +21,7 @@ export const createCustomer = async (data: any) => {
     // console.log("API response:", response.data);
     return response?.data;
   } catch (error) {
-    console.log("Error creating booking:", error);
+    console.log("Error:", error);
     throw extractErrorMessage(error);
   }
 };
@@ -32,7 +32,7 @@ export const createCleaner = async (data: any) => {
     // console.log("API response:", response.data);
     return response?.data;
   } catch (error) {
-    console.log("Error creating booking:", error);
+    console.log("Error:", error);
     throw extractErrorMessage(error);
   }
 };
@@ -45,35 +45,29 @@ export const otpVerification = async (code: any) => {
     // console.log("API response:", response.data);
     return response?.data;
   } catch (error) {
-    console.log("Error creating booking:", error);
+    console.log("Error:", error);
     throw extractErrorMessage(error);
   }
 };
 
 export const forgotPassword = async (data: any) => {
   try {
-    const response = await publicApi.post(
-      "/api/v1/booking/createBookingPayment",
-      data
-    );
+    const response = await publicApi.post("/api/v1/user/forgot-password", data);
     // console.log("API response:", response.data);
     return response?.data;
   } catch (error) {
-    console.log("Error creating booking:", error);
+    console.log("Error:", error);
     throw extractErrorMessage(error);
   }
 };
 
-export const resetPasssword = async (data: any) => {
+export const resetPassword = async (data: any) => {
   try {
-    const response = await publicApi.post(
-      "/api/v1/booking/createBookingPayment",
-      data
-    );
+    const response = await publicApi.post("/api/v1/user/reset-password", data);
     // console.log("API response:", response.data);
     return response?.data;
   } catch (error) {
-    console.log("Error creating booking:", error);
+    console.log("Error:", error);
     throw extractErrorMessage(error);
   }
 };
@@ -87,7 +81,7 @@ export const changePassword = async (data: any) => {
     // console.log("API response:", response.data);
     return response?.data;
   } catch (error) {
-    console.log("Error creating booking:", error);
+    console.log("Error:", error);
     throw extractErrorMessage(error);
   }
 };
@@ -98,7 +92,7 @@ export const viewProfile = async () => {
     // console.log("API response:", response.data);
     return response?.data;
   } catch (error) {
-    console.log("Error creating booking:", error);
+    console.log("Error:", error);
     throw extractErrorMessage(error);
   }
 };
